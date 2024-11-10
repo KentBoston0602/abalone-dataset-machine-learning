@@ -29,7 +29,7 @@ def set_page_selection(page):
 with st.sidebar:
 
     # Sidebar Title (Change this with your project's title)
-    st.title('Dashboard Template')
+    st.title('Abalone Dataset')
 
     # Page Button Navigation
     st.subheader("Pages")
@@ -57,7 +57,7 @@ with st.sidebar:
 
     # Project Members
     st.subheader("Members")
-    st.markdown("1. Elon Musk\n2. Jeff Bezos\n3. Sam Altman\n4. Mark Zuckerberg")
+    st.markdown("1. Kent Patrick BOSTON\n2. Luis Frederick CONDA\n3. Chaze Kyle FIDELINO\n4. Joseph Isaac ZAMORA")
 
 #######################
 # Data
