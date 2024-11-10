@@ -64,7 +64,7 @@ with st.sidebar:
 
     # Project Members
     st.subheader("Members")
-    st.markdown("1. Kent Patrick BOSTON\n2. Luis Frederick CONDA\n3. Chaze Kyle FIDELINO\n4. Joseph Isaac ZAMORA")
+    st.markdown("1. Kent Patrick **BOSTON**\n2. Luis Frederick **CONDA**\n3. Chaze Kyle **FIDELINO**\n4. Joseph Isaac **ZAMORA**")
 
 #######################
 # Data
@@ -80,7 +80,20 @@ dataset = pd.read_csv("data/abalone.csv")
 if st.session_state.page_selection == "about":
     st.header("ℹ️ About")
 
-    # Your content for the ABOUT page goes here
+    st.markdown(""" 
+
+    A Streamlit web application that performs **Exploratory Data Analysis (EDA)**, **Data Preprocessing**, and **Supervised Machine Learning** to predicting the age of abalone from physical measurements using **Linear Regression**, **Random Forest Regressor** and **Support Vector Regression**.
+
+    #### Pages
+    1. `Dataset` - Brief description of the Iris Flower dataset used in this dashboard. 
+    2. `EDA` - Exploratory Data Analysis of the Iris Flower dataset. Highlighting the distribution of Iris species and the relationship between the features. Includes graphs such as Pie Chart, Scatter Plots, and Pairwise Scatter Plot Matrix.
+    3. `Data Cleaning / Pre-processing` - Data cleaning and pre-processing steps such as encoding the species column and splitting the dataset into training and testing sets.
+    4. `Machine Learning` - Training two supervised classification models: Decision Tree Classifier and Random Forest Regressor. Includes model evaluation, feature importance, and tree plot.
+    5. `Prediction` - Prediction page where users can input values to predict the Iris species using the trained models.
+    6. `Conclusion` - Summary of the insights and observations from the EDA and model training.
+
+
+    """)
 
 # Dataset Page
 elif st.session_state.page_selection == "dataset":
