@@ -6,7 +6,8 @@ import streamlit as st
 
 # Data Analysis
 import pandas as pd
-import altair as alt
+import numpy as np
+from scipy.stats import skew
 
 # Data Visualization
 import matplotlib.pyplot as plt
@@ -29,6 +30,8 @@ alt.themes.enable("dark")
 
 #######################
 
+# Sidebar
+
 # Initialize page_selection in session state if not already set
 if 'page_selection' not in st.session_state:
     st.session_state.page_selection = 'about'  # Default page
@@ -37,7 +40,6 @@ if 'page_selection' not in st.session_state:
 def set_page_selection(page):
     st.session_state.page_selection = page
 
-# Sidebar
 with st.sidebar:
 
     # Sidebar Title (Change this with your project's title)
@@ -182,26 +184,105 @@ elif st.session_state.page_selection == "dataset":
 elif st.session_state.page_selection == "eda":
     st.header("📈 Exploratory Data Analysis (EDA)")
 
+    # Univariate Analysis
+    st.subheader("Univariate Analysis")
+    st.write("Univariate analysis aims to summarize and understand the distribution and characteristics of individual features in the Abalone dataset.")
+    st.write("Based on the problem statement and feature description, let's first compute the target variable of the problem, 'Age,' and assign it to the dataset. **Age = 1.5 + Rings**.")
+    
+    # Calculate 'Age' and drop 'Rings' column
+    abalone_df['Age'] = abalone_df['Rings'] + 1.5
+    abalone_df.drop('Rings', axis=1, inplace=True)
 
-    col = st.columns((1.5, 4.5, 2), gap='medium')
+    # Display the modified DataFrame
+    st.dataframe(abalone_df, use_container_width=True, hide_index=True)
 
-    # Your content for the EDA page goes here
+    # Histogram plot
+    fig, ax = plt.subplots(figsize=(20, 10))
+    abalone_df.hist(ax=ax, grid=False, layout=(2, 4), bins=30)
+    st.pyplot(fig)
 
-    with col[0]:
-        st.markdown('#### Graphs Column 1')
+    # Categorical and Numerical Columns
+    cat_col = [col for col in abalone_df.columns if abalone_df[col].dtype == 'object']
+    num_col = [col for col in abalone_df.columns if abalone_df[col].dtype != 'object']
 
+    col1, col2, col3 = st.columns(3)
 
-    with col[1]:
-        st.markdown('#### Graphs Column 2')
-        
-    with col[2]:
-        st.markdown('#### Graphs Column 3')
+    with col1:
+        st.markdown("**Categorical Columns:**")
+        st.write(cat_col)
+
+    with col2:
+        st.markdown("**Numerical Columns:**")
+        st.write(num_col)
+
+    with col3:
+        # Skewness of Numerical Columns
+        skew_values = skew(abalone_df[num_col], nan_policy='omit')
+        dummy = pd.concat([pd.DataFrame(list(num_col), columns=['Features']),
+                            pd.DataFrame(list(skew_values), columns=['Skewness Degree'])], axis=1)
+        dummy = dummy.sort_values(by='Skewness Degree', ascending=False)
+
+        # Display the DataFrame
+        st.dataframe(dummy, hide_index=True)
+
+    st.markdown("""
+    * The features **Height**, **Age**, **Shucked Weight**, **Shell Weight**, **Viscera Weight**, and **Whole Weight** all exhibit positive skewness, indicating a prevalence of lower values with a few higher values influencing the distribution.
+    * In contrast, **Diameter** and **Length** show negative skewness, suggesting that larger values are more common compared to smaller ones.
+    """)
+    
+    # Pie chart
+    col1, col2, col3 = st.columns(3)
+    with col2:
+        fig, ax = plt.subplots(figsize=(4, 4))  # Adjust the figure size as needed
+        plt.pie(abalone_df['Sex'].value_counts(), labels=['M', 'F', 'I'], autopct='%.00f%%')
+        plt.title("Sex Distribution")
+        st.pyplot(fig)
+
+    abalone_sex_stat = abalone_df.groupby('Sex')[['Length', 'Diameter', 'Height', 'Whole weight', 'Shucked weight', 'Viscera weight', 'Shell weight', 'Age']].mean().sort_values('Age')
+    st.dataframe(abalone_sex_stat, use_container_width=True)
+
+    # Bivariate Analysis
+    st.subheader("Bivariate Analysis")
+    st.write("Bivariate analysis aims to examine the relationship between two variables in the Abalone dataset to identify potential correlations or associations.")
+
+    # Pairplot
+    fig = sns.pairplot(abalone_df)
+    st.pyplot(fig)
+
+    st.markdown("""
+    *   **Length and Diameter**: A strong positive correlation indicates that larger abalone tend to have both greater length and diameter.
+    *   **Length**, **Diameter**, and **Whole Weight**: These features exhibit a moderate to strong positive correlation, suggesting that larger abalone generally weigh more.
+    *   **Height**: The overall relationship between height and other features seems to be weak. This suggests that height is not a strong predictor of other characteristics of the abalone.
+    *   **Age**: The distribution of age appears to be skewed to the right, with a majority of abalone being younger.
+    *   **Outliers**: The presence of outliers in some features can impact the correlation analysis and overall interpretation of the data.
+    """)
+
+    # Correlation heatmap
+    fig, ax = plt.subplots(figsize=(20, 7))
+    sns.heatmap(abalone_df[num_col].corr(), annot=True, ax=ax)
+    plt.title("Correlation Matrix", fontsize=16)
+    st.pyplot(fig)
+
+    st.markdown("""
+    *   **Whole Weight** does show strong positive correlations with **Length**, **Diameter**, **Shucked Weight**, **Viscera Weight**, and **Shell Weight**.
+    *   **Height** has the weakest correlations with other features compared to **Length**, **Diameter**, and **Weight**-related features.
+    *   Features like **Shell Weight**, **Diameter**, and **Length** show slightly stronger correlations with **Age** compared to other features.
+    """)
 
 # Data Cleaning Page
 elif st.session_state.page_selection == "data_cleaning":
     st.header("🧼 Data Cleaning and Data Pre-processing")
 
-    # Your content for the DATA CLEANING / PREPROCESSING page goes here
+    # Outliers
+    st.subheader("Outliers")
+
+    # Boxplot
+    fig, ax = plt.subplots(figsize=(15, 5))
+    abalone_df.boxplot(ax=ax)
+    st.pyplot(fig)
+
+    st.write("**df.boxplot()** method in pandas primarily operates on numerical features (**Sex**) and does not include categorical features directly in the boxplot visualization.")
+
 
 # Machine Learning Page
 elif st.session_state.page_selection == "machine_learning":
