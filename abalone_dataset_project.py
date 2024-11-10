@@ -3,11 +3,15 @@
 
 # Streamlit
 import streamlit as st
+import io
 
 # Data Analysis
 import pandas as pd
 import numpy as np
 from scipy.stats import skew
+from collections import Counter
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
 
 # Data Visualization
 import matplotlib.pyplot as plt
@@ -273,6 +277,43 @@ elif st.session_state.page_selection == "eda":
 elif st.session_state.page_selection == "data_cleaning":
     st.header("🧼 Data Cleaning and Data Pre-processing")
 
+    # Calculate 'Age' and drop 'Rings' column
+    abalone_df['Age'] = abalone_df['Rings'] + 1.5
+    abalone_df.drop('Rings', axis=1, inplace=True)
+
+    # Categorical and Numerical Columns
+    cat_col = [col for col in abalone_df.columns if abalone_df[col].dtype == 'object']
+    num_col = [col for col in abalone_df.columns if abalone_df[col].dtype != 'object']
+
+    st.dataframe(abalone_df.head(), use_container_width=True, hide_index=True)
+
+    st.divider()
+
+    # Capture the DataFrame information
+    buffer = io.StringIO()
+    abalone_df.info(buf=buffer)
+    s = buffer.getvalue()
+
+    # Calculate the sum of missing values for each column
+    missing_values = abalone_df.isna().sum()
+
+    # Create a row with two columns using st.columns
+    col1, col2 = st.columns(2)
+
+    # Display information in left column
+    with col1:
+        st.subheader("Abalone Dataset Information")
+        st.text(s)
+
+    # Display missing values in right column
+    with col2:
+        st.subheader("Missing Value Summary")
+        st.table(missing_values)
+
+    st.write("**The Abalone dataset does not contain any null values.**")
+
+    st.divider()
+
     # Outliers
     st.subheader("Outliers")
 
@@ -283,6 +324,218 @@ elif st.session_state.page_selection == "data_cleaning":
 
     st.write("**df.boxplot()** method in pandas primarily operates on numerical features (**Sex**) and does not include categorical features directly in the boxplot visualization.")
 
+    st.write("The **Abalone** dataset contains skewed features (like weights and shell dimensions) and the **IQR (Interquartile Range)** method is likely the most suitable for detecting outliers. It can handle skewed distributions better and doesn't assume a normal distribution.")
+
+    # Columns to center the image
+    col_dt_fig = st.columns((2, 4, 2), gap='medium')
+
+    with col_dt_fig[0]:
+        st.write(' ')
+
+    with col_dt_fig[1]:
+        IQR_image = Image.open('assets/reference_images/IQR.jpg')
+        st.image(IQR_image, caption='Box Plot: Visualizing Data Distribution and Outliers')
+
+    with col_dt_fig[2]:
+        st.write(' ')
+
+    st.markdown("`Reference:` https://www.simplypsychology.org/boxplots.html")
+
+    st.write("We are dealing with numerical data, so we should drop the gender section.")
+
+    st.code("""
+    data=abalone_df.drop(columns=['Sex'],axis=1)
+    data
+    """)
+
+    # DataFrame excluding 'Sex' 
+    data = abalone_df.drop(columns=['Sex'], axis=1)
+    st.dataframe(data.head(), use_container_width=True, hide_index=True)
+
+    st.markdown("""
+        First, we are going to find the first quartile (**Q1**), which represents a quarter of the way through the list of all data. Then, we’ll find the third quartile (**Q3**), which represents three-quarters of the way through the data list.,<br><br>
+    Next, we need to find the **median** of the dataset, which represents the midpoint of the entire data list.<br><br>
+    Finally, we can determine the **upper and lower ranges** of our data using these formulas:
+    *   *IQR = Q3 - Q1*
+    *   *lower range = Q1 - (1.5 x IQR)*
+    *   *upper range = Q3 + (1.5 x IQR)*
+
+    Once we understand the **upper and lower ranges**, we can detect **outliers**. By cleaning the data of outliers, we can perform a more accurate analysis. Now, we’ll apply the **interquartile range method** to the **Abalone** dataset.
+    """)
+
+    def detect_outliers(data, features):
+        outlier_indices = []
+
+        for c in features:
+            # Calculate Q1, Q3 and IQR
+            Q1 = np.percentile(data[c], 25)
+            Q3 = np.percentile(data[c], 75)
+            IQR = Q3 - Q1
+            outlier_step = 1.5 * IQR
+            lower_range = Q1 - outlier_step
+            upper_range = Q3 + outlier_step
+
+            # Determine outliers for this feature
+            outliers = data[(data[c] < lower_range) | (data[c] > upper_range)].index
+            outlier_indices.extend(outliers)
+
+        # Find samples with multiple outliers
+        outlier_counts = Counter(outlier_indices)
+        multiple_outliers = [idx for idx, count in outlier_counts.items() if count > 2]
+
+        return multiple_outliers
+
+    st.code("""
+    def detect_outliers(data, features):
+        outlier_indices = []
+
+        for c in features:
+            # Calculate Q1, Q3 and IQR
+            Q1 = np.percentile(data[c], 25)
+            Q3 = np.percentile(data[c], 75)
+            IQR = Q3 - Q1
+            outlier_step = 1.5 * IQR
+            lower_range = Q1 - outlier_step
+            upper_range = Q3 + outlier_step
+
+            # Determine outliers for this feature
+            outliers = data[(data[c] < lower_range) | (data[c] > upper_range)].index
+            outlier_indices.extend(outliers)
+
+        # Find samples with multiple outliers
+        outlier_counts = Counter(outlier_indices)
+        multiple_outliers = [idx for idx, count in outlier_counts.items() if count > 2]
+
+        return multiple_outliers
+    """)
+
+    st.write("Change the column names, as some blanks may cause issues.")
+
+    st.code("""
+    data.columns=['length', 'diameter', 'height', 'whole weight', 'shucked weight',
+       'viscera weight', 'shell weight', 'age']
+    data.info()
+    """)
+
+    data.columns=['length', 'diameter', 'height', 'whole weight', 'shucked weight',
+       'viscera weight', 'shell weight', 'age']
+    st.dataframe(data.head(), use_container_width=True, hide_index=True)
+
+    st.code("""
+    outliers = detect_outliers(abalone_df, num_col)
+    data.loc[outliers]
+    """)
+
+    # Detect outliers
+    outliers = detect_outliers(abalone_df, num_col)
+    st.dataframe(data.loc[outliers].sort_index(), use_container_width=True)
+
+    st.write("Drop the outliers and reset the indices.")
+
+    st.code("""
+    data=data.drop(outliers,axis=0).reset_index(drop = True)
+    data
+    """)
+
+    # Drop outliers
+    data = data.drop(outliers, axis=0).reset_index(drop=True)
+
+    # Display the cleaned data
+    st.dataframe(data.head(), use_container_width=True, hide_index=True)
+    st.write(f"We removed the outliers, resulting in a dataset with **{len(data)}** rows")
+
+    st.code("""
+    encoder = LabelEncoder()
+    abalone_df['Sex'] = encoder.fit_transform(abalone_df['Sex'])
+    abalone_df.head()
+    """)
+
+    # Create a LabelEncoder object
+    encoder = LabelEncoder()
+
+    # Encode the 'Sex' column
+    abalone_df['Sex'] = encoder.fit_transform(abalone_df['Sex'])
+
+    # Correlation Matrix
+    st.dataframe(abalone_df.head(), use_container_width=True, hide_index=True)
+
+    def plot_correlation_matrix(df):
+        fig, ax = plt.subplots(figsize=(20, 7))
+        sns.heatmap(abalone_df.corr(), annot=True, ax=ax)
+        plt.title("Correlation Matrix", fontsize=16)
+        st.pyplot(fig)
+
+    plot_correlation_matrix(abalone_df)
+
+    st.markdown("""
+    **Strong Positive Correlations:**
+    *   **Length**, **Diameter**, **Height**, **Whole weight**, **Shucked weight**, **Viscera weight**, and **Shell weight** are highly correlated with each other. This suggests that these variables are closely related to the overall size and weight of the abalone.
+    *   **Age** has a moderate positive correlation with **Shell weight**. This indicates that older abalone tend to have heavier shells.
+
+    **Weak Correlations:**
+    *   **Sex** has very weak correlations with all other features, suggesting that sex has little impact on the physical measurements of abalone.
+    """)
+
+    st.code("""
+    # Select the relevant features including the target (age)
+    # Excluding sex from the model can help improve performance
+    # Create a dataframe with the selected features
+    selected_data = data[['length', 'diameter', 'height', 'whole weight', 'shucked weight', 'viscera weight', 'shell weight', 'age']]
+    selected_data   
+    """)
+
+    # Select relevant features, excluding 'sex'
+    selected_data = data[['length', 'diameter', 'height', 'whole weight', 'shucked weight', 'viscera weight', 'shell weight', 'age']]
+    st.dataframe(selected_data.head(), use_container_width=True, hide_index=True)
+
+    # Train-Test Split
+    st.subheader("Train-Test Split")
+
+    st.code("""
+    # Separate features (X) and target variable (y) for model training
+
+    # X: Features
+    X = selected_data.drop('age', axis=1)
+
+    # y: Target variable
+    y = data['age']
+    """)
+
+    # Separate features (X) and target variable (y) for model training
+
+    # X: Features
+    X = selected_data.drop('age', axis=1)
+
+    # y: Target variable
+    y = data['age']
+
+    st.write("To train our model, we'll use specific characteristics of the abalone as input features. These features include the abalone's length, diameter, height, whole weight, shucked weight, viscera weight, and shell weight. The target variable we aim to predict is the age of the abalone.")
+
+    st.code("""
+    # Split dataset into training and testing sets
+    # Training - 80%
+    # Test Set - 20%
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    """)
+
+    # Split dataset into training and testing sets
+    # Training - 80%
+    # Test Set - 20%
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    st.subheader("X_train")
+    st.dataframe(X_train, use_container_width=True, hide_index=True)
+
+    st.subheader("X_test")
+    st.dataframe(X_test, use_container_width=True, hide_index=True)
+
+    st.subheader("y_train")
+    st.dataframe(y_train, use_container_width=True, hide_index=True)
+
+    st.subheader("y_test")
+    st.dataframe(y_test, use_container_width=True, hide_index=True)
+
+    st.markdown("After splitting our dataset into `training` and `test` set. We can now proceed with **training our supervised models**.")
 
 # Machine Learning Page
 elif st.session_state.page_selection == "machine_learning":
