@@ -1,9 +1,11 @@
 streamlit
 numpy
 pandas
+scipy
 altair
 matplotlib
 seaborn
 plotly
+pillow
 scikit-learn
 joblib
