@@ -55,6 +55,13 @@ with st.sidebar:
     if st.button("Conclusion", use_container_width=True, on_click=set_page_selection, args=('conclusion',)):
         st.session_state.page_selection = "conclusion"
 
+    # Project Details
+    st.subheader("Abstract")
+    st.markdown("A Streamlit dashboard highlighting the results of training three supervised machine learning models using the Abalone dataset from Kaggle.")
+    st.markdown("📊 [Dataset](https://www.kaggle.com/datasets/rodolfomendes/abalone-dataset/data)")
+    st.markdown("📗 [Google Colab Notebook](https://colab.research.google.com/drive/11jZ-5Eq3cjT9kt7EX_36JPg9EIEuK3QG?usp=sharing)")
+    st.markdown("🐙 [GitHub Repository](https://github.com/KentBoston0602/abalone-dataset-machine-learning)")
+
     # Project Members
     st.subheader("Members")
     st.markdown("1. Kent Patrick BOSTON\n2. Luis Frederick CONDA\n3. Chaze Kyle FIDELINO\n4. Joseph Isaac ZAMORA")
