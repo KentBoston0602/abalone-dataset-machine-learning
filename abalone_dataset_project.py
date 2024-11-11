@@ -541,7 +541,73 @@ elif st.session_state.page_selection == "data_cleaning":
 elif st.session_state.page_selection == "machine_learning":
     st.header("🤖 Machine Learning")
 
-    # Your content for the MACHINE LEARNING page goes here
+    ####################################################################################################
+
+    # Redefining data preparation steps for machine learning page
+    # Re-initializing due to separate page requirements
+    
+    # Calculate 'Age' and drop 'Rings' column
+    abalone_df['Age'] = abalone_df['Rings'] + 1.5
+    abalone_df.drop('Rings', axis=1, inplace=True)
+
+    # Categorical and Numerical Columns
+    cat_col = [col for col in abalone_df.columns if abalone_df[col].dtype == 'object']
+    num_col = [col for col in abalone_df.columns if abalone_df[col].dtype != 'object']
+
+    # DataFrame excluding 'Sex' 
+    data = abalone_df.drop(columns=['Sex'], axis=1)
+
+    def detect_outliers(data, features):
+        outlier_indices = []
+
+        for c in features:
+            # Calculate Q1, Q3 and IQR
+            Q1 = np.percentile(data[c], 25)
+            Q3 = np.percentile(data[c], 75)
+            IQR = Q3 - Q1
+            outlier_step = 1.5 * IQR
+            lower_range = Q1 - outlier_step
+            upper_range = Q3 + outlier_step
+
+            # Determine outliers for this feature
+            outliers = data[(data[c] < lower_range) | (data[c] > upper_range)].index
+            outlier_indices.extend(outliers)
+
+        # Find samples with multiple outliers
+        outlier_counts = Counter(outlier_indices)
+        multiple_outliers = [idx for idx, count in outlier_counts.items() if count > 2]
+
+        return multiple_outliers
+
+    data.columns=['length', 'diameter', 'height', 'whole weight', 'shucked weight',
+       'viscera weight', 'shell weight', 'age']
+
+    # Detect outliers
+    outliers = detect_outliers(abalone_df, num_col)
+
+    # Drop outliers
+    data = data.drop(outliers, axis=0).reset_index(drop=True)
+
+    # Display the cleaned data
+    st.dataframe(data.head(), use_container_width=True, hide_index=True)
+
+    # Select relevant features, excluding 'sex'
+    selected_data = data[['length', 'diameter', 'height', 'whole weight', 'shucked weight', 'viscera weight', 'shell weight', 'age']]
+
+    # Separate features (X) and target variable (y) for model training
+
+    # X: Features
+    X = selected_data.drop('age', axis=1)
+
+    # y: Target variable
+    y = data['age']
+
+    # Split dataset into training and testing sets
+    # Training - 80%
+    # Test Set - 20%
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    ####################################################################################################
 
 # Prediction Page
 elif st.session_state.page_selection == "prediction":
