@@ -10,14 +10,21 @@ import pandas as pd
 import numpy as np
 from scipy.stats import skew
 from collections import Counter
-from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import train_test_split
 
 # Data Visualization
 import matplotlib.pyplot as plt
 import seaborn as sns
 import altair as alt
 import plotly.express as px
+
+# Machine Learning
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+from sklearn.metrics import mean_squared_error, r2_score
 
 # Images
 from PIL import Image
@@ -198,7 +205,7 @@ elif st.session_state.page_selection == "eda":
     abalone_df.drop('Rings', axis=1, inplace=True)
 
     # Display the modified DataFrame
-    st.dataframe(abalone_df, use_container_width=True, hide_index=True)
+    st.dataframe(abalone_df.head(), use_container_width=True, hide_index=True)
 
     # Histogram plot
     fig, ax = plt.subplots(figsize=(20, 10))
@@ -444,6 +451,8 @@ elif st.session_state.page_selection == "data_cleaning":
     st.dataframe(data.head(), use_container_width=True, hide_index=True)
     st.write(f"We removed the outliers, resulting in a dataset with **{len(data)}** rows")
 
+    st.divider()
+
     st.code("""
     encoder = LabelEncoder()
     abalone_df['Sex'] = encoder.fit_transform(abalone_df['Sex'])
@@ -487,6 +496,8 @@ elif st.session_state.page_selection == "data_cleaning":
     # Select relevant features, excluding 'sex'
     selected_data = data[['length', 'diameter', 'height', 'whole weight', 'shucked weight', 'viscera weight', 'shell weight', 'age']]
     st.dataframe(selected_data.head(), use_container_width=True, hide_index=True)
+
+    st.divider()
 
     # Train-Test Split
     st.subheader("Train-Test Split")
@@ -540,6 +551,8 @@ elif st.session_state.page_selection == "data_cleaning":
 # Machine Learning Page
 elif st.session_state.page_selection == "machine_learning":
     st.header("🤖 Machine Learning")
+
+    st.subheader("Cleaned Data")
 
     ####################################################################################################
 
@@ -608,6 +621,228 @@ elif st.session_state.page_selection == "machine_learning":
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     ####################################################################################################
+
+    st.divider()
+
+    # LINEAR REGRESSION
+    st.subheader("Supervised Machine Learning - Linear Regression")
+
+    # Training the Model
+    st.markdown("### **`Training the Model`**")
+    lr = LinearRegression()
+    lr.fit(X_train, y_train)
+
+    st.code("""
+    lr = LinearRegression()
+    lr.fit(X_train, y_train)
+    """)
+
+    # Applying the Model to Make a Prediction
+    st.markdown("### **`Applying the Model to Make a Prediction`**")
+    y_lr_train_pred = lr.predict(X_train)
+    y_lr_test_pred = lr.predict(X_test)
+
+    st.code("""
+    y_lr_train_pred = lr.predict(X_train)
+    y_lr_test_pred = lr.predict(X_test)
+    """)
+
+    # Evaluate Model Performance
+    st.markdown("### **`Evaluate Model Performance`**")
+    lr_train_mse = mean_squared_error(y_train, y_lr_train_pred)
+    lr_train_r2 = r2_score(y_train, y_lr_train_pred)
+
+    lr_test_mse = mean_squared_error(y_test, y_lr_test_pred)
+    lr_test_r2 = r2_score(y_test, y_lr_test_pred)
+
+    st.code("""
+    lr_train_mse = mean_squared_error(y_train, y_lr_train_pred)
+    lr_train_r2 = r2_score(y_train, y_lr_train_pred)
+
+    lr_test_mse = mean_squared_error(y_test, y_lr_test_pred)
+    lr_test_r2 = r2_score(y_test, y_lr_test_pred)
+    """)
+
+    lr_results = pd.DataFrame(['Linear Regression', lr_train_mse, lr_train_r2, lr_test_mse, lr_test_r2]).transpose()
+    lr_results.columns = ['Method', 'Training MSE', 'Training R2', 'Test MSE', 'Test R2']
+    st.dataframe(lr_results)
+
+    train_accuracy = lr.score(X_train, y_train) #train data
+    test_accuracy = lr.score(X_test, y_test) #test data
+
+    st.code("""
+    train_accuracy = lr.score(X_train, y_train) #train data
+    test_accuracy = lr.score(X_test, y_test) #test data
+
+    print(f'Train Accuracy: {train_accuracy * 100:.2f}%')
+    print(f'Test Accuracy: {test_accuracy * 100:.2f}%')
+    """)
+
+    st.write(f'Train Accuracy: {train_accuracy * 100:.2f}%')
+    st.write(f'Test Accuracy: {test_accuracy * 100:.2f}%')
+
+    st.markdown("""
+    1.   **Model Fit**: The R-squared values for both the training and testing sets are around 0.5, indicating that the model explains about 50% of the variance in the age.
+    2.   **Generalization**: The R-squared values for the training and testing sets are relatively close, suggesting that the model generalizes reasonably well to unseen data.
+    3.   **Error**: The MSE values are relatively high, indicating that the model's predictions can be quite far off from the actual values.
+    """)
+
+    st.image("assets/reference_images/LR_Model_Visualization.png", use_column_width=True)
+
+    st.markdown("""
+    *   The scatter plots show that the data points are spread around the perfect prediction line (red dashed line), indicating that the model's predictions are not always perfect but follow a linear trend.
+    *   There appears to be a wider spread of data points in the test set (green) compared to the training set (blue). This suggests slightly higher variability in the model's predictions for unseen data.
+    """)
+
+    st.divider()
+
+    # RANDOM FOREST (REGRESSOR)
+    st.subheader("Supervised Machine Learning - Random Forest (Regressor)")
+
+    # Training the Model
+    st.markdown("### **`Training the Model`**")
+    rf = RandomForestRegressor()
+    rf.fit(X_train, y_train)
+
+    st.code("""
+    rf = RandomForestRegressor()
+    rf.fit(X_train, y_train)
+    """)
+
+    # Applying the Model to Make a Prediction
+    st.markdown("### **`Applying the Model to Make a Prediction`**")
+    y_rf_train_pred = rf.predict(X_train)
+    y_rf_test_pred = rf.predict(X_test)
+
+    st.code("""
+    y_rf_train_pred = rf.predict(X_train)
+    y_rf_test_pred = rf.predict(X_test)
+    """)
+
+    # Evaluate Model Performance
+    st.markdown("### **`Evaluate Model Performance`**")
+    rf_train_mse = mean_squared_error(y_train, y_rf_train_pred)
+    rf_train_r2 = r2_score(y_train, y_rf_train_pred)
+
+    rf_test_mse = mean_squared_error(y_test, y_rf_test_pred)
+    rf_test_r2 = r2_score(y_test, y_rf_test_pred)
+
+    st.code("""
+    rf_train_mse = mean_squared_error(y_train, y_rf_train_pred)
+    rf_train_r2 = r2_score(y_train, y_rf_train_pred)
+
+    rf_test_mse = mean_squared_error(y_test, y_rf_test_pred)
+    rf_test_r2 = r2_score(y_test, y_rf_test_pred)
+    """)
+
+    rf_results = pd.DataFrame(['Random Forest', rf_train_mse, rf_train_r2, rf_test_mse, rf_test_r2]).transpose()
+    rf_results.columns = ['Method', 'Training MSE', 'Training R2', 'Test MSE', 'Test R2']
+    st.dataframe(rf_results)
+
+    train_accuracy = rf.score(X_train, y_train) #train data
+    test_accuracy = rf.score(X_test, y_test) #test data
+
+    st.code("""
+    train_accuracy = rf.score(X_train, y_train) #train data
+    test_accuracy = rf.score(X_test, y_test) #test data
+
+    print(f'Train Accuracy: {train_accuracy * 100:.2f}%')
+    print(f'Test Accuracy: {test_accuracy * 100:.2f}%')
+    """)
+
+    st.write(f'Train Accuracy: {train_accuracy * 100:.2f}%')
+    st.write(f'Test Accuracy: {test_accuracy * 100:.2f}%')
+
+    st.markdown("""
+    1.   **Model Fit**: R-squared close to 1 in the training set indicates that the model captures almost all variance in the training data. This might suggest overfitting.
+    2.   **Overfit**: The test R-squared is significantly lower than the training R-squared, suggesting that the model might be overfitting to the training data and not generalizing well to unseen data.
+    3.   **Error**: Random Forest's training MSE is lower, but its test MSE is comparable to Linear Regression.
+    """)
+
+    st.image("assets/reference_images/RF_Model_FI.png", use_column_width=True)
+
+    st.markdown("""
+    **Shell weight** is the most important feature by a significant margin, indicating that it has the strongest predictive power in estimating the target variable (age). This suggests that shell weight plays a crucial role in determining the age of abalones.
+    """)
+
+    st.divider()
+
+    # SUPPORT VECTOR REGRESSION
+    st.subheader("Supervised Machine Learning - Support Vector Regression")
+
+    # Training the Model
+    st.markdown("### **`Training the Model`**")
+    svr = SVR()
+    svr.fit(X_train, y_train)
+
+    st.code("""
+    svr = SVR()
+    svr.fit(X_train, y_train)
+    """)
+
+    # Applying the Model to Make a Prediction
+    st.markdown("### **`Applying the Model to Make a Prediction`**")
+    y_svr_train_pred = svr.predict(X_train)
+    y_svr_test_pred = svr.predict(X_test)
+
+    st.code("""
+    y_svr_train_pred = svr.predict(X_train)
+    y_svr_test_pred = svr.predict(X_test)
+    """)
+
+    # Evaluate Model Performance
+    st.markdown("### **`Evaluate Model Performance`**")
+    svr_train_mse = mean_squared_error(y_train, y_svr_train_pred)
+    svr_train_r2 = r2_score(y_train, y_svr_train_pred)
+
+    svr_test_mse = mean_squared_error(y_test, y_svr_test_pred)
+    svr_test_r2 = r2_score(y_test, y_svr_test_pred)
+
+    st.code("""
+    svr_train_mse = mean_squared_error(y_train, y_svr_train_pred)
+    svr_train_r2 = r2_score(y_train, y_svr_train_pred)
+
+    svr_test_mse = mean_squared_error(y_test, y_svr_test_pred)
+    svr_test_r2 = r2_score(y_test, y_svr_test_pred)
+    """)
+
+    svr_results = pd.DataFrame(['Support Vector Regression', svr_train_mse, svr_train_r2, svr_test_mse, svr_test_r2]).transpose()
+    svr_results.columns = ['Method', 'Training MSE', 'Training R2', 'Test MSE', 'Test R2']
+    st.dataframe(svr_results)
+
+    train_accuracy = svr.score(X_train, y_train) #train data
+    test_accuracy = svr.score(X_test, y_test) #test data
+
+    st.code("""
+    train_accuracy = svr.score(X_train, y_train) #train data
+    test_accuracy = svr.score(X_test, y_test) #test data
+
+    print(f'Train Accuracy: {train_accuracy * 100:.2f}%')
+    print(f'Test Accuracy: {test_accuracy * 100:.2f}%')
+    """)
+
+    st.write(f'Train Accuracy: {train_accuracy * 100:.2f}%')
+    st.write(f'Test Accuracy: {test_accuracy * 100:.2f}%')
+
+    st.markdown("""
+    1.   **Model Fit**: The R-squared values for both training and testing sets are around 0.5. This means the SVR model explains about 50% of the variance in the target variable (age), which suggests a moderate fit.
+    2.   **Generalization**: The training and testing R-squared values are relatively close. It indicates that the model generalizes reasonably well.
+    3.   **Error**: The MSE values for the training (4.70) and testing (5.78) sets are relatively high, similar to Linear Regression and Random Forest models.
+    """)
+
+    st.image("assets/reference_images/SVR_Model_Visualization.png", use_column_width=True)
+
+    st.markdown("""
+    **Scatter Plot:**
+    *   The data points generally follow the red dashed line, indicating a positive correlation between actual and predicted ages. This suggests that the **SVR** model is capturing the underlying relationship between the features and the target variable.
+    *   However, there's significant scatter around the line, implying that the model's predictions can be quite variable, especially for higher actual ages.
+
+    **Residual Plot:**
+    *   **Positive Residuals**: When a data point lies above the horizontal line at 0, it means the actual age is higher than the predicted age.
+    *   **Negative Residuals**: When a data point lies below the horizontal line, it means the actual age is lower than the predicted age.
+
+    In the given residual plot, we can observe that as the predicted age increases, there's a higher concentration of positive residuals. This suggests that the model systematically underestimates the age for older abalones.
+    """)
 
 # Prediction Page
 elif st.session_state.page_selection == "prediction":
