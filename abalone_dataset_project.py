@@ -873,7 +873,7 @@ elif st.session_state.page_selection == "prediction":
         st.write("Cleaned data not found. Please run the Pre-processing page first.")
 
     # Prompt user to choose a model
-    model_choice = st.selectbox("Choose Model", ("Select Model", "Linear Regression", "Random Forest Regressor", "Support Vector Regressor"))
+    model_choice = st.selectbox("Choose Model", ("Select Model", "Linear Regression", "Random Forest Regressor", "Support Vector Regression"))
 
     # Input fields for features
     length = st.number_input("Length (mm)", min_value=0.0, step=0.001, format="%.4f")
