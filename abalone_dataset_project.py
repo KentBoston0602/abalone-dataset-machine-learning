@@ -53,7 +53,7 @@ def set_page_selection(page):
 
 with st.sidebar:
 
-    st.image("assets/reference_images/sidebar_abalone.png")
+    st.image("assets/abalone_pictures/sidebar_abalone.png")
 
     # Sidebar Title (Change this with your project's title)
     st.title('Abalone Dataset')
