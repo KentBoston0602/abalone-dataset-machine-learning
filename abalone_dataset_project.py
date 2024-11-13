@@ -26,8 +26,17 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error, r2_score
 
+# Importing Models
+import joblib
+
 # Images
 from PIL import Image
+
+# Importing models
+
+lr = joblib.load('assets/models/abalone_linear_regression.joblib')
+rf = joblib.load('assets/models/abalone_random_forest_regressor.joblib')
+svr = joblib.load('assets/models/abalone_support_vector_regression.joblib')
 
 #######################
 # Page configuration
@@ -453,6 +462,8 @@ elif st.session_state.page_selection == "data_cleaning":
     st.dataframe(data.head(), use_container_width=True, hide_index=True)
     st.write(f"We removed the outliers, resulting in a dataset with **{len(data)}** rows")
 
+    st.session_state['cleaned_data'] = data
+
     st.divider()
 
     st.code("""
@@ -850,7 +861,50 @@ elif st.session_state.page_selection == "machine_learning":
 elif st.session_state.page_selection == "prediction":
     st.header("👀 Prediction")
 
-    # Your content for the PREDICTION page goes here
+    # Initialize cleaned_data in session_state if not present
+    if 'cleaned_data' not in st.session_state:
+        st.session_state['cleaned_data'] = None
+    
+    # Show cleaned data
+    if st.session_state['cleaned_data'] is not None:
+        st.write("Here’s the cleaned data used for prediction:")
+        st.dataframe(st.session_state['cleaned_data'], use_container_width=True, hide_index=True)
+    else:
+        st.write("Cleaned data not found. Please run the Pre-processing page first.")
+
+    # Prompt user to choose a model
+    model_choice = st.selectbox("Choose Model", ("Select Model", "Linear Regression", "Random Forest Regressor", "Support Vector Regressor"))
+
+    # Input fields for features
+    length = st.number_input("Length (mm)", min_value=0.0, step=0.001, format="%.4f")
+    diameter = st.number_input("Diameter (mm)", min_value=0.0, step=0.001, format="%.4f")
+    height = st.number_input("Height (mm)", min_value=0.0, step=0.001, format="%.4f")
+    whole_weight = st.number_input("Whole Weight (grams)", min_value=0.0, step=0.001, format="%.4f")
+    shucked_weight = st.number_input("Shucked Weight (grams)", min_value=0.0, step=0.001, format="%.4f")
+    viscera_weight = st.number_input("Viscera Weight (grams)", min_value=0.0, step=0.001, format="%.4f")
+    shell_weight = st.number_input("Shell Weight (grams)", min_value=0.0, step=0.001, format="%.4f")
+
+    # Collect inputs into an array and reshape for model input
+    features = np.array([length, diameter, height, whole_weight, shucked_weight, viscera_weight, shell_weight]).reshape(1, -1)
+
+    if st.button("Predict Age"):
+        # Check if a model has been selected
+        if model_choice == "Select Model":
+            st.warning("Please select a model to proceed with the prediction.")
+        elif any(feature == 0 for feature in [length, diameter, height, whole_weight, shucked_weight, viscera_weight, shell_weight]):
+            st.warning("Please provide all feature values before predicting.")
+        else:
+            # Perform prediction based on the selected model
+            if model_choice == "Linear Regression":
+                age_prediction = lr.predict(features)[0]
+            elif model_choice == "Random Forest Regressor":
+                age_prediction = rf.predict(features)[0]
+            else:
+                age_prediction = svr.predict(features)[0]
+
+            # Display the predicted age
+            st.write(f"Predicted Age of Abalone: {age_prediction:.1f} years")
+
 
 # Conclusions Page
 elif st.session_state.page_selection == "conclusion":
