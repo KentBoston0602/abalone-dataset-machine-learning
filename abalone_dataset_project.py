@@ -179,7 +179,7 @@ elif st.session_state.page_selection == "dataset":
 
     The Abalone dataset contains 4,177 entries with nine columns, where each column represents a feature of an abalone.
 
-    1. **Sex:** The sex of the abalone ('M', 'F', or 'I' for immature).
+    1. **Sex:** The sex of the abalone ('M', 'F', or 'I' for infant).
     2. **Length:** The longest shell measurement (in millimeters).
     3. **Diameter:** The shell measurement perpendicular to the length (in millimeters).
     4. **Height:** The height of the abalone with the meat included (in millimeters).
